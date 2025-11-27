@@ -7,26 +7,28 @@ const createToken = (user) => {
   });
 };
 
-exports.signup = async (req, res) => {
-  const { username, email, password } = req.body;
-  // validation logics to be added here
-  const user = await User.create({ username, email, password });
-  const token = createToken(user);
-  res.cookie(process.env.COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-  res.status(201).json({
-    message: "Signup successful",
-    user: {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-    },
-  });
-};
+// exports.signup = async (req, res) => {
+//   const { username, email, password } = req.body;
+
+//   // validation logics to be added here
+
+//   const user = await User.create({ username, email, password });
+//   const token = createToken(user);
+//   res.cookie(process.env.COOKIE_NAME, token, {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: "lax",
+//     maxAge: 7 * 24 * 60 * 60 * 1000,
+//   });
+//   res.status(201).json({
+//     message: "Signup successful",
+//     user: {
+//       id: user._id,
+//       username: user.username,
+//       email: user.email,
+//     },
+//   });
+// };
 
 exports.login = async (req, res) => {
   console.log("---------- login process running ----------");
@@ -77,4 +79,68 @@ exports.me = async (req, res) => {
       email: user.email,
     },
   });
+};
+
+exports.signup = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    // 1. Check empty fields
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // 2. Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    // 3. Validate password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message:
+          "Password must be 6–20 characters and include both uppercase and lowercase letters.",
+      });
+    }
+
+    // 4. Check duplicate username
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res.status(400).json({ message: "Username is already taken. Try another one." });
+    }
+
+    // 5. Check duplicate email
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ message: "Email is already registered. Try logging in." });
+    }
+
+    // 6. Create User
+    const user = await User.create({ username, email, password });
+
+    // 7. Generate cookie token
+    const token = createToken(user);
+
+    res.cookie(process.env.COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // 8. Success response
+    return res.status(201).json({
+      message: "Signup successful",
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    console.error("Signup Error:", err);
+    return res.status(500).json({ message: "Server error during signup" });
+  }
 };

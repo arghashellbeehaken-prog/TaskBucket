@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 
 const createToken = (user) => {
   return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -142,5 +143,52 @@ exports.signup = async (req, res) => {
   } catch (err) {
     console.error("Signup Error:", err);
     return res.status(500).json({ message: "Server error during signup" });
+  }
+};
+
+exports.updateMe = async (req, res) => {
+  try {
+    console.log("=== updateMe called ===");
+    console.log("Request body:", req.body);
+
+    const { userId, username, password } = req.body;
+
+    const user = await User.findById(userId);
+    console.log(`User fetched from DB with id=${userId}:`, user);
+
+    if (!user) {
+      console.log("User not found for ID:", userId);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (username) {
+      console.log(`Updating username from ${user.username} to ${username}`);
+      user.username = username;
+    }
+
+    // compare passwords
+    console.log("Comparing passwords...");
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      alert("Wrong password. Please try again.");
+      return;
+    }
+    //change password
+    user.password = password;
+
+    const savedUser = await user.save();
+    console.log("User successfully updated:", savedUser);
+
+    res.json({
+      message: "User info updated successfully",
+      user: {
+        id: savedUser._id,
+        username: savedUser.username,
+        email: savedUser.email,
+      },
+    });
+  } catch (err) {
+    console.error("Error in updateMe:", err);
+    res.status(500).json({ error: err.message });
   }
 };

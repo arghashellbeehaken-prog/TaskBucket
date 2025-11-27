@@ -9,8 +9,11 @@ const UserModal = ({ isOpen, onClose }) => {
   const [username, setUsername] = useState(user?.username || "");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
 
   if (!isOpen || !user) return null;
+
+  console.log(user);
 
   const handleStartEdit = () => {
     setEditing(true);
@@ -25,14 +28,21 @@ const UserModal = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = {};
+      const payload = { userId: user.id };
+      if (!currentPassword) {
+        alert("put current password for authentication.");
+        return;
+      }
       if (username && username !== user.username) payload.username = username;
       if (password) payload.password = password;
-      if (Object.keys(payload).length === 0) {
+      payload.currentPassword = currentPassword;
+
+      if (Object.keys(payload).length <= 1 && !password && !username) {
         setSaving(false);
         setEditing(false);
         return;
       }
+
       await dispatch(updateProfile(payload)).unwrap();
       setPassword("");
       setEditing(false);
@@ -51,6 +61,7 @@ const UserModal = ({ isOpen, onClose }) => {
             <div>
               <h3 style={{ margin: 0 }}>{user.username}</h3>
               <div className="small">{user.email}</div>
+              <div className="small">{user.id}</div>
             </div>
             <div>
               <button className="btn ghost close" onClick={onClose}>
@@ -75,6 +86,14 @@ const UserModal = ({ isOpen, onClose }) => {
               <div>
                 <label>Username</label>
                 <input value={username} onChange={(e) => setUsername(e.target.value)} />
+              </div>
+              <div>
+                <label>Current Password</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
               </div>
               <div>
                 <label>New Password</label>

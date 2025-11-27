@@ -7,5 +7,6 @@ router.post("/signup", auth.signup);
 router.post("/login", auth.login);
 router.post("/logout", auth.logout);
 router.get("/me", authMiddleware, auth.me);
+router.put("/updateMe", authMiddleware, auth.updateMe);
 
 module.exports = router;

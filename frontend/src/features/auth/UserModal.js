@@ -4,7 +4,6 @@ import { updateProfile } from "./authSlice";
 import api from "../../api/apiClient";
 
 const UserModal = ({ isOpen, onClose }) => {
-  console.log("hjsjhadjha");
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
   const [editing, setEditing] = useState(false);
@@ -65,6 +64,7 @@ const UserModal = ({ isOpen, onClose }) => {
 
   const loadHistory = async () => {
     try {
+      console.log("inside loadHistory");
       setLoadingHistory(true);
       const res = await api.get(`/tasks?owner=${user.id}`);
       setHistoryTasks(res.data.data);
@@ -96,7 +96,16 @@ const UserModal = ({ isOpen, onClose }) => {
               ) : (
                 historyTasks.map((t, index) => (
                   <p key={t._id} className="small">
-                    {index + 1}. {t.title}
+                    <span
+                      style={
+                        t.completedPercentage === 100
+                          ? { textDecoration: "line-through" }
+                          : { textDecoration: "none" }
+                      }
+                    >
+                      {index + 1}. {t.title}{" "}
+                    </span>
+                    <span style={{ fontWeight: 700 }}>( {t.completedPercentage}% )</span>
                   </p>
                 ))
               )}

@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { updateProfile } from "./authSlice";
+import api from "../../api/apiClient";
 
 const UserModal = ({ isOpen, onClose }) => {
+  console.log("hjsjhadjha");
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
   const [editing, setEditing] = useState(false);
@@ -10,6 +12,14 @@ const UserModal = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
+  const [historyTasks, setHistoryTasks] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    loadHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   if (!isOpen || !user) return null;
 
@@ -53,6 +63,20 @@ const UserModal = ({ isOpen, onClose }) => {
     }
   };
 
+  const loadHistory = async () => {
+    try {
+      setLoadingHistory(true);
+      const res = await api.get(`/tasks?owner=${user.id}`);
+      setHistoryTasks(res.data.data);
+      console.log(res.data.data);
+    } catch (err) {
+      console.error("Failed to load history", err);
+      alert(err.response?.data?.message || "Failed to load history");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
@@ -62,6 +86,20 @@ const UserModal = ({ isOpen, onClose }) => {
               <h3 style={{ margin: 0 }}>{user.username}</h3>
               <div className="small">{user.email}</div>
               <div className="small">{user.id}</div>
+            </div>
+            <div>
+              <h3>User task history</h3>
+              {loadingHistory ? (
+                <p className="small">Loading...</p>
+              ) : historyTasks.length === 0 ? (
+                <p className="small">No tasks found.</p>
+              ) : (
+                historyTasks.map((t, index) => (
+                  <p key={t._id} className="small">
+                    {index + 1}. {t.title}
+                  </p>
+                ))
+              )}
             </div>
             <div>
               <button className="btn ghost close" onClick={onClose}>

@@ -3,7 +3,6 @@ const crypto = require("crypto");
 
 const generateId = () => crypto.randomBytes(8).toString("hex");
 
-// create SuperTask
 exports.createTask = async (req, res) => {
   try {
     const { title, description, color } = req.body;
@@ -23,7 +22,6 @@ exports.createTask = async (req, res) => {
   }
 };
 
-// get all supertasks for user
 exports.getTasks = async (req, res) => {
   try {
     const tasks = await TaskLibrary.find({ owner: req.userId }).sort("-createdAt");
@@ -36,7 +34,6 @@ exports.getTasks = async (req, res) => {
   }
 };
 
-// get a supertask by id
 exports.getTask = async (req, res) => {
   try {
     const { id } = req.params;
@@ -48,7 +45,6 @@ exports.getTask = async (req, res) => {
   }
 };
 
-// update supertask
 exports.updateTask = async (req, res) => {
   try {
     const { id } = req.params;
@@ -68,7 +64,6 @@ exports.updateTask = async (req, res) => {
   }
 };
 
-// delete a super task
 exports.deleteTask = async (req, res) => {
   try {
     const { id } = req.params;
@@ -81,13 +76,11 @@ exports.deleteTask = async (req, res) => {
   }
 };
 
-// add a subtask
 exports.addSubtask = async (req, res) => {
   try {
     const { id } = req.params;
     const { text } = req.body;
     const subId = generateId();
-    console.log(`[addSubtask] user=${req.userId} taskId=${id} text=${text}`);
 
     const task = await TaskLibrary.findOneAndUpdate(
       { _id: id, owner: req.userId },
@@ -96,7 +89,6 @@ exports.addSubtask = async (req, res) => {
     );
 
     if (!task) return res.status(404).json({ message: "Task Not Found" });
-    console.log(`[addSubtask] created subId=${subId} subtasksCount=${task.subtasks.length}`);
 
     res.json({
       message: "Subtask added successfully",
@@ -107,14 +99,11 @@ exports.addSubtask = async (req, res) => {
   }
 };
 
-// subtask completion
 exports.toggleSubtask = async (req, res) => {
   try {
     const { id, subId } = req.params;
-    console.log(`[toggleSubtask] user=${req.userId} taskId=${id} subId=${subId}`);
     const task = await TaskLibrary.findOne({ _id: id, owner: req.userId });
     if (!task) return res.status(404).json({ message: "Task Not Found" });
-    // robust id matching: coerce both sides to strings to handle legacy shapes
     const findSub = (list, target) =>
       list.find((s) => {
         const sid =
@@ -127,16 +116,7 @@ exports.toggleSubtask = async (req, res) => {
       });
 
     const sub = findSub(task.subtasks || [], subId);
-    console.log(
-      `[toggleSubtask] foundSub=${!!sub} subtasks=${JSON.stringify(
-        task.subtasks.map((s) => ({
-          id: s.id,
-          _id: s._id ? String(s._id) : null,
-          text: s.text,
-          completed: s.completed,
-        }))
-      )}`
-    );
+
     if (!sub) return res.status(404).json({ message: "Subtask Not Found" });
     sub.completed = !sub.completed;
     await task.save();
@@ -149,12 +129,10 @@ exports.toggleSubtask = async (req, res) => {
   }
 };
 
-// update subtask text
 exports.updateSubtask = async (req, res) => {
   try {
     const { id, subId } = req.params;
     const { text } = req.body;
-    console.log(`[updateSubtask] user=${req.userId} taskId=${id} subId=${subId} text=${text}`);
 
     const task = await TaskLibrary.findOne({ _id: id, owner: req.userId });
     if (!task) return res.status(404).json({ message: "Task Not Found" });
@@ -170,11 +148,7 @@ exports.updateSubtask = async (req, res) => {
       });
 
     const sub = findSub(task.subtasks || [], subId);
-    console.log(
-      `[updateSubtask] foundSub=${!!sub} subtasks=${JSON.stringify(
-        task.subtasks.map((s) => ({ id: s.id, _id: s._id ? String(s._id) : null, text: s.text }))
-      )}`
-    );
+
     if (!sub) return res.status(404).json({ message: "Subtask Not Found" });
     sub.text = text;
     await task.save();
@@ -187,21 +161,15 @@ exports.updateSubtask = async (req, res) => {
   }
 };
 
-// delete subtask
 exports.deleteSubtask = async (req, res) => {
   try {
     const { id, subId } = req.params;
-    console.log(`[deleteSubtask] user=${req.userId} taskId=${id} subId=${subId}`);
 
     const task = await TaskLibrary.findOne({ _id: id, owner: req.userId });
     if (!task) return res.status(404).json({ message: "Task Not Found" });
 
     const originalLength = task.subtasks.length;
-    console.log(
-      `[deleteSubtask] beforeCount=${originalLength} subtasks=${JSON.stringify(
-        task.subtasks.map((s) => ({ id: s.id, _id: s._id ? String(s._id) : null, text: s.text }))
-      )}`
-    );
+
     task.subtasks = task.subtasks.filter((s) => {
       const sid =
         s.id !== undefined && s.id !== null

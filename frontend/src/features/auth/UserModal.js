@@ -17,7 +17,6 @@ const UserModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (!isOpen) return;
     loadHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   if (!isOpen || !user) return null;

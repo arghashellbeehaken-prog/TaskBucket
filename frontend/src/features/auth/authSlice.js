@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/apiClient";
 
-// Async thunks
 export const signup = createAsyncThunk("auth/signup", async (payload, { rejectWithValue }) => {
   try {
     const res = await api.post("/auth/signup", payload);
@@ -50,7 +49,6 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
-// Initial state
 const initialState = {
   user: null,
   status: "idle",
@@ -58,7 +56,6 @@ const initialState = {
   initialized: false,
 };
 
-// Slice
 const authSlice = createSlice({
   name: "auth",
   initialState,

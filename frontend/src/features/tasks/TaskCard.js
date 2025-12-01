@@ -1,11 +1,8 @@
-import React from "react";
-
 const TaskCard = ({ task, onClick, onDelete, onEdit }) => {
   const completedCount = task.subtasks?.filter((s) => s.completed).length || 0;
   const totalCount = task.subtasks?.length || 0;
   const progress = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
 
-  // color comes from the backend; comes as string
   const headerStyle = {
     background: task.color || "linear-gradient(90deg,#3b82f6,#60a5fa)",
     padding: 16,
